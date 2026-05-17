@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset = "UFT-8">
+        <title> Мой AI Чат </title>
+        <style>
+            body {
+                background : #111;
+                color : white;
+                font-family: Arial, sans-serif;
+                display: flex ;
+                flex-direction: column;
+                align-items: center;
+                margin-top: 100px;
+            }
+            
+            input{
+                padding: 10px;
+                width: 300px;
+                border-radius: 8px;
+                border: none;
+                margin-bottom: 10px;
+            }
+        
+            button{
+                padding: 10px 20px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                background: #6c5ce7;
+                color: white;
+            }
+
+            button:hover {
+                background: #5a4bd6;
+            }
+            p{
+                margin-top: 20px;
+                font-size: 18px;
+                text-align: center;
+            }
+
+            #chat{
+    width: 80%;
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: 10px;
+    height: 400px;
+    background: #f5f5f5;
+    overflow-y: auto;
+}
+
+.user{
+    background: #4f46e5;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 10px;
+    text-align: right;
+}
+
+.bot{
+    background: #e5e5e5;
+    color: black;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 10px;
+    text-align: left;
+}
+.buttons {
+    display: flex; /*елементы в линию*/
+    justify-content: center;/*цетрировать кнопки*/
+    gap: 10px;/*расстояние между кнопками*/
+    margin-top: 10px;/*отступ сверху*/
+}
+        </style>
+    </head>
+    <body>
+        <h1> AI Chat </h1>
+        <div id="chat"></div>
+        <input id="input" placeholder="Напиши что-нибудь"> <!--input поле ввода. id=... уникальное имя для js -->
+        <!--placeholder серый текст внутри-->
+        <div class="buttons">
+        <button onclick="send()">Отправить</button><!--onclick означает когда нажали кнопку отправить запустить send-->
+        <button onclick="clearChat()">Очистить чат</button>
+        </div>
+        <p id="response"></p> <!--место для ответа сервера-->
+        <script>
+            let messages = [];
+
+            async function send() { 
+                //async function send() внутри будут асинхронные операции запрос к серверущo
+                const question = document.getElementById ("input").value;
+
+                messages.push({
+                        role: "user",
+                        content: question
+                    });
+
+                const chat = document.getElementById("chat");
+                
+                chat.innerHTML += `
+                <div class= "user"> ${question} </div>
+                    `;
+
+                    chat.innerHTML += `
+                    <div class = "bot loading"> AI печатает</div>
+                    `;// пока ждет ответ показывает Аи думает
+
+                    let dots = 0;
+                    const loadingAnimation = setInterval(() => {
+                        dots++;
+                        if(dots > 3){
+                            dots = 0;
+                        }
+                        const loadingElements = document.querySelectorAll(".loading");
+                        loadingElements [loadingElements.length - 1].innerHTML = "AI печатает" + ".".repeat(dots);
+                    }   , 500) // отвечает за динамическое появление точек в Ai печатает
+                    
+
+                    
+                    
+                    
+                const res = await fetch ("http://localhost:3000/chat",{// fetch() функция браузера для запросов отправить запрос на адресс
+                    method:"POST",//post это отправка данных
+                    headers: {"Content-Type":"application/json"},
+                    body: JSON.stringify({messages: messages})
+                });
+
+
+                const data = await res.json();
+                messages.push({
+                    role: "assistant",
+                    content: data.answer
+                });// память разговора
+
+                console.log(data);
+
+                     document.getElementById("input").value = ""; 
+
+                     const loadingMessage = document.querySelectorAll (".loading");
+                     clearInterval(loadingAnimation);
+
+                    loadingMessage[loadingMessage.length - 1].innerHTML = data.answer;
+                    // заменяит ии думает на ответ
+                    chat.scrollTop = chat.scrollHeight; // скролинг чата автаматически
+                     setTimeout(() => {
+                     localStorage.setItem("chat", chat.innerHTML);
+                     }, 100); // сохраняет чат в память браузера
+
+            }
+              function clearChat (){//новая вункция ClearChat
+                    document.getElementById("chat").innerHTML = "";// "" означает сдеать строку пустой
+                    localStorage.removeItem("chat");// удаляет данные из браузера
+                }
+
+
+
+            const input = document.getElementById("input");//
+            input.addEventListener("keydown", function(event){
+                if (event.key === "Enter"){
+                    event.preventDefault ();//что бы Enter не делал перенос строки
+                    send();
+                }
+            })
+            window.onload = function() {
+                const savedChat = localStorage.getItem("chat");
+                if (savedChat) {
+                    document.getElementById("chat").innerHTML = savedChat;
+                }
+            }// проверяет есть ли сохраненный чат . если есть востанавливает его
+
+            //keydown, function когда нажали клавишу запусти функцию
+            //addEventListener следи за событием 
+            //event информация о нажатии какую копку нажали
+            //event.key === Enter если это была клавища Enter то отправляем 
+            //document.querySelectorAll (".loading"); заменяет все элементы loading
+            //loadingMessage[loadingMessage.length - 1].innerHTML = data.answer; берет первый вопрос заменяет первый loading и тд 
+        </script>
+    </body>
+    </html>
+    
