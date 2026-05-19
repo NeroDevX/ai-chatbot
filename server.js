@@ -27,13 +27,13 @@ app.post ("/chat", async (req, res) =>{ // если кто то оправлет
             return res.status(400).json({error:"Нет вопроса"}); // если вопрос пустой сервер выдает ошибку 400
         }
         const answer = await askAI (messages); // передача вопроса , ожидаие ответа от ии
-        const auth = await authorize();
-       await writeToSheet(
-        auth,
-        SPREADSHEET_ID,
-        messages[messages.length - 1].content,
-        answer
-       );
+        //const auth = await authorize();
+      // await writeToSheet(
+       // auth,
+        //SPREADSHEET_ID,
+        //messages[messages.length - 1].content,
+       // answer
+       //);
        console.log("ANSWER:", answer);
         res.json ({ answer }); // ответ пользователю
     } catch (error) {
